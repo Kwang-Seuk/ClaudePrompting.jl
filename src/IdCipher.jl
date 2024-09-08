@@ -16,24 +16,34 @@ function pad_pkcs7(data::Vector{UInt8}, block_size::Int64)
   return vcat(data, padding)
 end
 
+function unpad_pkcs7(data::Vector{UInt8})
+  padding_length = Int(data[end])
+  return data[1:end-padding_length]
+end
 
 function encrypt_id(id::String, key::AES128Key)
   cipher = AESCipher(; key_length=128, mode=AES.CBC, key=key)
+  iv = rand(UInt8, 16)
   id_bytes = Vector{UInt8}(id)
   padded_id = pad_pkcs7(id_bytes, 16)
-  encrypted = encrypt(padded_id, cipher)
-  encrypted_data = encrypted.data
-  return bytes2hex(encrypted_data)
+  encrypted = encrypt(padded_id, cipher, iv)
+  if encrypted isa AES.CipherText
+    encrypted_data = encrypted.data
+  else
+    encrypted_data = encrypted
+  end
+  return bytes2hex(vcat(iv, encrypted_data))
 end
-
 
 function decrypt_id(encrypted_id::String, key::AES128Key)
   cipher = AESCipher(; key_length=128, mode=AES.CBC, key=key)
-  encrypted_bytes = hex2bytes(encrypted_id)
-  iv = encrypted_bytes[1:16]
-  ciphertext = encrypted_bytes[17:end]
-  decrypted = decrypt(AES.CipherText(ciphertext, iv, AES.CBC), cipher)
-  unpadded = unpad_pkcs7(decrypted)
-  return String(unpadded)
+  encrypted_data = hex2bytes(encrypted_id)
+  iv = encrypted_data[1:16]
+  ciphertext = encrypted_data[17:end]
+  cipher_text = AES.CipherText{Vector{UInt8}, AES.CBC}(ciphertext, iv, length(ciphertext))
+  decrypted = Vector{UInt8}(decrypt(cipher_text, cipher))
+  unpadded_id = unpad_pkcs7(decrypted)
+  return String(unpadded_id)
 end
+
 end
