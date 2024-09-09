@@ -4,7 +4,15 @@ using Random
 
 import ClaudePrompting.IdCipher as IC 
 
-key = IC.generate_key()
-id = "2024194999"
-encrypted_id = IC.encrypt_id(id, key)
-IC.decrypt_id(encrypted_id, key)
+@testset "PKCS7 padding test" begin
+  vec1 = Vector{UInt8}("123")
+  vec1_UInt8 = [0x31, 0x32, 0x33]
+  test_padded_data1 = IC.pad_pkcs7(vec1, 16)
+  @test test_padded_data1[1:3] == vec1_UInt8
+  @test length(test_padded_data1) == 16
+  @test typeof(test_padded_data1) == Vector{UInt8}
+
+  vec2 = [123] 
+  vec2_uint8 = Vector{UInt8}([123])
+  @test_throws MethodError IC.pad_pkcs7(vec2, 16)
+end
