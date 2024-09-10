@@ -8,7 +8,6 @@ using Dates
 import ClaudePrompting.IdCipher as IC
 import ClaudePrompting.PrepareData as PD
 
-
 @testset "Multiple IDs encryption test" begin
 
   df = DataFrame(
@@ -63,6 +62,3 @@ end
     @test length(result_large) == 10000
   end
 end
-
-yml_string = YAML.yaml(yml_data)
-
