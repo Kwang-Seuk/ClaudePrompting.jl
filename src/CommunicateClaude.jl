@@ -6,7 +6,8 @@ using DataFrames
 using JSON3
 using HTTP
 
-export set_anthropic_api_key, provide_yml_to_claude, yml_res_to_dataframe
+export set_anthropic_api_key, provide_yml_to_claude, yml_res_to_dataframe,
+       process_sequential_batches
 
 function set_anthropic_api_key(filepath::String)
   if isfile(filepath)
@@ -55,6 +56,37 @@ function yml_res_to_dataframe(
   df = select!(df, col_names)
 
   return df
+end
+
+function process_sequential_batches(
+  yml_string::String, prompt::String, batch_size::Int64=10
+)
+  entries = split(yml_string, "\n- ")
+  entries[1] = entries[1][2:end]
+
+  total_items = length(entries)
+  num_batches = ceil(Int, total_items / batch_size)
+  results = String[]
+
+  for i in 1:num_batches
+    start_idx = (i - 1) * batch_size + 1
+    end_idx = min(i * batch_size, total_items)
+    batch = entries[start_idx:end_idx]
+    batch_yml = "- " * join(batch, "\n- ")
+
+    try
+      result = provide_yml_to_claude(batch_yml, prompt)
+      push!(results, result)
+
+      println("Processed batch $i of $num_batches")
+    catch e
+      println("Error processing batch $i: $e")
+    end
+
+    sleep(1)
+  end
+
+  return results
 end
 
 end
