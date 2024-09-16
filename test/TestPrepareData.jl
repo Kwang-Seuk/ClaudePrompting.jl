@@ -29,7 +29,7 @@ end
   @testset "Functionality test" begin 
     df1 = DataFrame(A = [1, 2], B = ["x", "y"]) 
     key_order1 = [:A, :B]
-    res = PD.df_to_yml(df, key_order)
+    res = PD.df_to_yml(df1, key_order1)
     @test collect(keys(res[1])) == [:A, :B]
     @test res[1][:A] == 1
   end
