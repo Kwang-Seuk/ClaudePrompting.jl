@@ -1,6 +1,7 @@
 using ClaudePrompting
 using Test
 
-@testset "ClaudePrompting.jl" begin
-    # Write your tests here.
-end
+include("TestIdCipher.jl")
+include("TestPrepareData.jl")
+
+

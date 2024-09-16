@@ -4,68 +4,46 @@ using YAML
 using AES
 using Random
 
-export generate_key, pkcs7_pad
+export generate_key, encrypt_id, decrypt_id
 
-function generate_iv(block_size::Int64=16)::Vector{UInt8}
-  """
-  Generate an initial vector for student ID encryption at given block size
-
-  ```julia
-  iv = generate_iv(4)
-  ```
-  4-element Vector{UInt8}:
-  0xb0
-  0x18
-  0x57
-  0x9b
-  """
-  rand(UInt8, block_size)
-
+function generate_key()
+  return AES128Key(rand(UInt8, 16))
 end
 
-function pkcs7_pad(data::Vector{UInt8}, block_size::Int64)::Vector{UInt8}
-  """
-  Pad data using PKCS#7 padding. Pads the given data to be a multiple of
-  the specified block size using PKCS#7 padding. The padding value is equal
-  to the number of bytes added.
-
-  Arguments:
-  - `data::Vector{UInt64}`: The original data to be padded in UInt8
-  - `block_size::Int64`: The target block size in bytes
-
-  Returns:
-  - `Vector{UInt64}`: The padded data
-
-  Example:
-  ```julia
-  pkcs7_pad(UInt64[1, 2], 8)
-  ```
-  6-element Vector{UInt8}:
-  0x0000000000000006
-  0x0000000000000006
-  0x0000000000000006
-  0x0000000000000006
-  0x0000000000000006
-  0x0000000000000006
-  """
-
-  pad_size = block_size - length(data) % block_size
-
-  return vcat(fill(UInt8(pad_size), pad_size))
+function pad_pkcs7(data::Vector{UInt8}, block_size::Int64)
+  padding_length = block_size - (length(data) % block_size)
+  padding = fill(UInt8(padding_length), padding_length)
+  return vcat(data, padding)
 end
 
-function generate_key(key_size::Int64=32)::Vector{UInt8}
-  """
-  Generate a random key for AES encryption
-  """
-  rand(UInt8, key_size)
-
+function unpad_pkcs7(data::Vector{UInt8})
+  padding_length = Int(data[end])
+  return data[1:end-padding_length]
 end
 
-function encrypt_id(id::String, key::Vector{UInt8})::String
-  
-  iv = generate_iv()
-  padded_id = pkcs7_pad(Vector{UInt8.(id)}, 16)
+function encrypt_id(id::String, key::AES128Key)
+  cipher = AESCipher(; key_length=128, mode=AES.CBC, key=key)
+  iv = rand(UInt8, 16)
+  id_bytes = Vector{UInt8}(id)
+  padded_id = pad_pkcs7(id_bytes, 16)
+  encrypted = encrypt(padded_id, cipher, iv)
+  if encrypted isa AES.CipherText
+    encrypted_data = encrypted.data
+  else
+    encrypted_data = encrypted
+  end
+  return bytes2hex(vcat(iv, encrypted_data))
+end
+
+function decrypt_id(encrypted_id::String, key::AES128Key)
+  cipher = AESCipher(; key_length=128, mode=AES.CBC, key=key)
+  encrypted_data = hex2bytes(encrypted_id)
+  iv = encrypted_data[1:16]
+  ciphertext = encrypted_data[17:end]
+  cipher_text = AES.CipherText{Vector{UInt8}, AES.CBC}(ciphertext, iv, length(ciphertext))
+  decrypted = Vector{UInt8}(decrypt(cipher_text, cipher))
+  unpadded_id = unpad_pkcs7(decrypted)
+  return String(unpadded_id)
 end
 
 end
