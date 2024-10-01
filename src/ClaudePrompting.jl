@@ -4,5 +4,6 @@ module ClaudePrompting
 include("IdCipher.jl")
 include("PrepareData.jl")
 include("CommunicateClaude.jl")
+include("IdAnonymizer.jl")
 
 end
