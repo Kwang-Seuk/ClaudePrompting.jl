@@ -20,15 +20,16 @@ SHA = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
 
 [compat]
-YAML = "0.4"
-OrderedCollections = "1"
-JSON3 = "1"
-CSV = "0.10"
-MbedTLS = "1"
 AES = "0.1"
+CSV = "0.10"
 DataFrames = "1"
-PromptingTools = "0.57"
 HTTP = "1"
+JSON3 = "1"
+MbedTLS = "1"
+OrderedCollections = "1"
+PromptingTools = "0.57"
+SHA = "0.7"
+YAML = "0.4"
 julia = "1"
 
 [extras]
