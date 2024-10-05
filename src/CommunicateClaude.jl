@@ -29,9 +29,9 @@ function provide_yml_to_claude(yml_string::String, prompt::String)
   body = JSON3.write(Dict(
     #"model" => "claude-3-haiku-20240307", 
     "model" => "claude-3-5-sonnet-20240620",
-    "max_tokens" => 4000,
+    "max_tokens" => 8000,
     "messages" => [
-      Dict("role" => "user", "content" => "Here is some data in DataFrame format:\n\n$yml_string\n\n$prompt")
+      Dict("role" => "user", "content" => "$prompt\n\nHere is some data in string originally from yaml format:\n\n$yml_string")
     ]
   ))
   response = HTTP.post("https://api.anthropic.com/v1/messages", headers, body)
